@@ -8,6 +8,6 @@
         while (stack.Count > 0)
             result += stack.Pop();
 
-        return result;
+        return result; 
     }
 }
