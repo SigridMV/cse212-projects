@@ -1,4 +1,5 @@
-﻿public static class MysteryStack2 {
+﻿// Each letter is pushed onto the stack to store them. Then, they are popped off in reverse order.
+public static class MysteryStack2 {
     private static bool IsFloat(string text) {
         return float.TryParse(text, out _);
     }

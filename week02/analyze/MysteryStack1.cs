@@ -11,3 +11,5 @@
         return result; 
     }
 }
+
+// Reverse the input text.
