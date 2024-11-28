@@ -21,8 +21,34 @@ public static class SetsAndMaps
     /// <param name="words">An array of 2-character words (lowercase, no duplicates)</param>
     public static string[] FindPairs(string[] words)
     {
-        // TODO Problem 1 - ADD YOUR CODE HERE
-        return [];
+        // Create a HashSet to store words we've already seen
+        var seen = new HashSet<string>();
+        // Create a list to store the result pairs
+        var result = new List<string>();
+
+        // Loop through each word in the input array
+        foreach (var word in words)
+        {
+            // Skip words where the first letter is the same as the second letter
+            if (word[0] == word[1]) continue;
+
+            // Reverse the current word and store it as a string
+            var reverse = new string(word.Reverse().ToArray());
+
+            // Check if the reversed word is already in the seen set
+            if (seen.Contains(reverse))
+            {
+                // If it is, add the pair (reverse & word) to the result list
+                result.Add($"{reverse} & {word}");
+            }
+            else
+            {
+                // Otherwise, add the current word to the seen set
+                seen.Add(word);
+            }
+        }
+        // Return the result list as an array of strings
+        return result.ToArray();
     }
 
     /// <summary>
@@ -38,13 +64,39 @@ public static class SetsAndMaps
     /// <returns>fixed array of divisors</returns>
     public static Dictionary<string, int> SummarizeDegrees(string filename)
     {
+        // Create a dictionary to store the degree as the key and the count as the value
         var degrees = new Dictionary<string, int>();
-        foreach (var line in File.ReadLines(filename))
+
+        // Check if the specified file exists
+        if (!File.Exists(filename))
         {
-            var fields = line.Split(",");
-            // TODO Problem 2 - ADD YOUR CODE HERE
+            // If the file doesn't exist, throw an exception with an error message
+            throw new FileNotFoundException("The specified file does not exist.");
         }
 
+        // Loop through each line in the file
+        foreach (var line in File.ReadLines(filename))
+        {
+            // Split the line by commas to get the individual fields
+            var fields = line.Split(",");
+
+            // If the line doesn't have at least 4 fields, skip it
+            if (fields.Length < 4) continue;
+
+            // Get the degree (the 4th field in the line) and remove any extra spaces
+            var degree = fields[3].Trim();
+
+            // If the degree is empty or null, skip this line
+            if (string.IsNullOrEmpty(degree)) continue;
+
+            // Try to get the current count for the degree from the dictionary
+            degrees.TryGetValue(degree, out var count);
+
+            // Update the dictionary with the new count for this degree
+            degrees[degree] = count + 1;
+        }
+
+        // Return the dictionary containing the degree counts
         return degrees;
     }
 
@@ -66,8 +118,12 @@ public static class SetsAndMaps
     /// </summary>
     public static bool IsAnagram(string word1, string word2)
     {
-        // TODO Problem 3 - ADD YOUR CODE HERE
-        return false;
+        // Remove any spaces from the words and convert them to lowercase
+        word1 = word1.Replace(" ", "").ToLower();
+        word2 = word2.Replace(" ", "").ToLower();
+
+        // Check if both words have the same length and if their characters match in sorted order
+        return word1.Length == word2.Length && word1.OrderBy(c => c).SequenceEqual(word2.OrderBy(c => c));
     }
 
     /// <summary>
@@ -86,14 +142,28 @@ public static class SetsAndMaps
     /// </summary>
     public static string[] EarthquakeDailySummary()
     {
+        // Define the URI (link) to get the earthquake data from the USGS
         const string uri = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson";
+
+        // Create a new HttpClient to send the GET request
         using var client = new HttpClient();
+
+        // Create the GET request message
         using var getRequestMessage = new HttpRequestMessage(HttpMethod.Get, uri);
+
+        // Send the GET request and read the response as a stream
         using var jsonStream = client.Send(getRequestMessage).Content.ReadAsStream();
+
+        // Create a StreamReader to read the stream data
         using var reader = new StreamReader(jsonStream);
+
+        // Read the entire JSON content from the stream
         var json = reader.ReadToEnd();
+
+        // Set options to ensure the property names in the JSON are case-insensitive
         var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
+        // Deserialize the JSON into a FeatureCollection object
         var featureCollection = JsonSerializer.Deserialize<FeatureCollection>(json, options);
 
         // TODO Problem 5:
@@ -101,6 +171,17 @@ public static class SetsAndMaps
         // on those classes so that the call to Deserialize above works properly.
         // 2. Add code below to create a string out each place a earthquake has happened today and its magitude.
         // 3. Return an array of these string descriptions.
-        return [];
+
+        // Extract and create a list of strings describing the place and magnitude of each earthquake
+        var descriptions = featureCollection.Features
+            // Filter earthquakes that have both a valid magnitude and a non-empty place name
+            .Where(feature => feature.Properties.Mag.HasValue && !string.IsNullOrWhiteSpace(feature.Properties.Place))
+
+            // Create a string with the place and magnitude formatted to two decimal places
+            .Select(feature => $"{feature.Properties.Place} - Mag {feature.Properties.Mag:F2}")
+            .ToArray();
+
+        // Return the array of descriptions
+        return descriptions;
     }
 }
